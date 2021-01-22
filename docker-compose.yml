@@ -1,0 +1,46 @@
+version: '3'
+
+volumes:
+  web_dev_db: {}
+
+services:
+  db:
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+    container_name: db_main
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_USER: "admin"
+      MYSQL_PASSWORD: "0000"
+      MYSQL_DATABASE: "main"
+      TZ: "Asia/Seoul"
+    image: mariadb:10.4
+    ports:
+      - "3309:3306"
+    volumes:
+      - web_dev_db:/var/lib/mysql
+
+  django:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-dev
+    environment:
+      - DJANGO_DEBUG=True
+      - DJANGO_DB_HOST=db_main
+      - DJANGO_DB_PORT=3309
+      - DJANGO_DB_NAME=main
+      - DJANGO_DB_USERNAME=admin
+      - DJANGO_DB_PASSWORD=0000
+      - DJANGO_SECRET_KEY=dev_secret_key
+      - TZ=Asia/Seoul
+    ports:
+      - "8000:8000"
+    command: 
+      - bash
+      - -c
+      - |
+        #/wait-for-it.sh db:3309 -t 10
+        python manage.py runserver 0:8000
+    volumes:
+      - ./main_project/:/main_project/
+
